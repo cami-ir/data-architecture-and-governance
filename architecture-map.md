@@ -2,7 +2,7 @@
 flowchart TD
 
     %% 1. Data Stewardship Layer (Governance at Source)
-    subgraph M2 [Data Stewardship & Governance: Systems and Sovereignty]
+    subgraph M2 [Data Sources Across Systems and Campus - Current State]
         direction TB
         A1[Operational Systems<br/>Veracross, DonorPerfect, LionLink, Stelter, etc.]
         A2[Steward-Managed Data<br/>e.g., College Info, Clubs]
@@ -12,7 +12,7 @@ flowchart TD
     A1 --> B1[Automated Ingestion<br/>Airbyte]
     A2 --> B2[Structured Input<br/>Connected Sheets and Forms]
 
-    %% 3. BigQuery / Google Cloud Control Tower (Governance at Core)
+    %% 3. Google Cloud Platform: Control and Governance Layer
     subgraph M1 [BigQuery / Google Cloud: Governance and Control Hub]
         direction TB
         C[Validation and Discrepancy Detection]
@@ -27,7 +27,7 @@ flowchart TD
             J[Workflow Assistance]
         end
 
-        %% 6. API Integration Layer (Governed Writeback)
+        %% 6. API Integration Layer (Approved Data for Writeback and Use)
         K[API Orchestration Layer<br/>Governed Writeback Rules]
     end
 
@@ -47,8 +47,8 @@ flowchart TD
 
     %% The Integration Flow (Posting to APIs)
     E --> K
-    K -->|POST: Institutional Data| V
-    K -->|Direct POST: LionLink, Stelter, etc.| DP
+    K -->|Direct Updates to Veracross| V
+    K -->|Direct Updates from Systems: LionLink, Stelter, etc.| DP
     V -.->|Native Bio/Demo Sync| DP
 
     %% AI Layer feeds from Governed Data
