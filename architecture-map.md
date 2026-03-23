@@ -1,80 +1,87 @@
 ```mermaid
 flowchart TD
 
-    %% 1. Data Stewardship Layer (Governance at Source)
-    subgraph M2 [Data Sources Across Systems and Campus - Current State]
-        direction TB
-        A1[Operational Systems<br/>Veracross, DonorPerfect, LionLink, Stelter, etc.]
-        A2[Steward-Managed Data<br/>e.g., College Info, Clubs]
+    %% 1. START: PRIMARY SOURCES
+    subgraph M2 [Primary Operational Sources]
+        direction LR
+        A1[Institutional CRM<br/>Veracross, DonorPerfect]
+        A2[Steward-Managed Data<br/>e.g., Connected Sheets]
     end
 
-    %% 2. Ingestion Path
-    A1 --> B1[Automated Ingestion<br/>Airbyte]
-    A2 --> B2[Structured Input<br/>Connected Sheets and Forms]
+    %% 2. INGESTION PHASE
+    M2 --> B1[Automated Ingestion<br/>Airbyte]
+    M2 --> B2[Structured Input Process TBD]
 
-    %% 3. Google Cloud Platform: Control and Governance Layer
-    subgraph M1 [BigQuery / Google Cloud: Governance and Control Hub]
+    %% 3. THE GOVERNANCE HUB
+    subgraph M1 [BigQuery / Google Cloud: Governance Hub]
         direction TB
-        C[Validation and Discrepancy Detection]
-        D[AI-Assisted Review - HITL<br/>AI suggests, Analyst approves]
+        C[Validation & Discrepancy]
+        D[AI-Assisted Review - HITL]
         E[Governed Output Tables]
+        K[API Orchestration Layer]
+    end
 
-        %% 4. AI / Agent Expansion
-        subgraph M4 [AI / Agent Layer: Future Expansion]
-            direction TB
-            H[Natural Language Access]
-            I[Insight Generation]
-            J[Workflow Assistance]
+    %% 4. SIDECAR: OTHER PHILANTHROPY
+    A3[Other Philanthropy Data:<br/>Wealth Screening, Events]
+    
+    subgraph M3 [Future Ingestion for Agentic AI]
+        direction TB
+        B3[Semantic Layer & Metadata]
+    end
+
+    %% 5. OUTPUT & ACTION LAYER
+    subgraph M5 [Output, Future AI Agent, and Action Layer]
+        direction TB
+        
+        subgraph M4 [Agentic AI Layer: Future Direction]
+            H[Natural Language Query and Metabase Interaction]
+            I[Automated Insights Surfacing]
+            J[Agentic Workflows]
         end
 
-        %% 6. API Integration Layer (Approved Data for Writeback and Use)
-        K[API Orchestration Layer<br/>Governed Writeback Rules]
-    end
-
-    %% 5. Output and Action Layer
-    subgraph M5 [Output and Action Layer]
-        direction TB
+        F[Dashboards<br/>Metabase]
         V[Veracross Update]
         DP[DonorPerfect Sync]
-        F[Dashboards<br/>Metabase]
-        G[Insight and Action]
     end
 
     %% --- Connections ---
-    B1 & B2 --> C
-    C --> D
-    D --> E
-
-    %% The Integration Flow (Posting to APIs)
+    
+    %% Main Governed Waterfall
+    B1 & B2 --> C --> D --> E
     E --> K
-    K -->|Direct Updates to Veracross| V
-    K -->|Direct Updates from Systems: LionLink, Stelter, etc.| DP
-    V -.->|Native Bio/Demo Sync| DP
+    K --> V
+    K --> DP
 
-    %% AI Layer feeds from Governed Data
-    E --> H
-    E --> I
-    D --> J
+    %% Metabase Logic
+    E -->|Governed Data| F
+    
+    %% Peripheral/Future Logic
+    A3 ===>|Dashboard Ready Transformation Step| F
+    A3 -.-> B3
+    B3 -.-> C
 
-    %% Insight Flow (To Metabase)
-    E --> F
-    F --> G
-
-    %% Feedback Loops
-    G -.->|Feedback: Refine Logic| C
-    G -.->|Feedback: Train Agents| M4
+    %% Agentic AI Logic (Dotted Connections)
+    E -.->|Semantic Context| M4
+    M4 <.->|NL Interface| F
+    M4 -.->|Actionable Triggers| K
 
     %% --- Styling ---
-    classDef rules stroke:#f39c12,stroke-width:4px,stroke-dasharray: 5 5;
-    class C,D,K rules;
-
-    style M1 fill:#f4f7f9,stroke:#3498db,stroke-width:2px
-    style M2 fill:#fdfcf0,stroke:#f1c40f
-    style M4 fill:#f5eef8,stroke:#8e44ad,stroke-width:2px,stroke-dasharray: 3 3
-    style M5 fill:#ffffff,stroke:#27ae60,stroke-width:1px
-
-    style C fill:#d6eaf8
-    style D fill:#fcf3cf
-    style E fill:#d6eaf8,font-weight:bold
-    style K fill:#e1f5fe,stroke:#f39c12,stroke-dasharray: 5 5
-    style G fill:#d4efdf,stroke:#27ae60,stroke-width:2px
+    
+    %% Box Styles
+    style M1 fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    style M2 fill:#fffde7,stroke:#fbc02d,stroke-width:3px
+    style M5 fill:#e8f5e9,stroke:#2e7d32
+    
+    %% Specific Dotted Styles for Future Components
+    style M4 fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,stroke-dasharray: 5 5
+    style M3 fill:#fafafa,stroke:#9e9e9e,stroke-dasharray: 5 5
+    
+    %% Node Styles
+    style E font-weight:bold,fill:#bbdefb
+    style A3 fill:#fff4e6,stroke:#e67e22
+    
+    %% Link Styles (Targeting specific line indices)
+    linkStyle 10 stroke:#e67e22,stroke-width:3px;
+    linkStyle 13 stroke:#7b1fa2,stroke-width:2px,stroke-dasharray: 5 5;
+    linkStyle 14 stroke:#7b1fa2,stroke-width:2px,stroke-dasharray: 5 5;
+    linkStyle 15 stroke:#7b1fa2,stroke-width:2px,stroke-dasharray: 5 5;
