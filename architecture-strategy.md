@@ -1,91 +1,191 @@
-# Advancement Data Architecture & AI-First Strategy
+# Advancement Data & Analytics Vision
 
-## System Flow & Governance Model
+## Overview
 
-```mermaid
-flowchart TD
+This vision establishes a modern, governed data architecture for Advancement that:
 
-    %% 1. Data Stewardship Layer (Governance at Source)
-    subgraph M2 [Data Stewardship & Governance: Systems and Sovereignty]
-        direction TB
-        spacer1[ ]:::spacer
-        A1[Operational Systems<br/>Veracross, DonorPerfect, LionLink, Stelter, etc.]
-        A2[Steward-Managed Data<br/>e.g., College Info, Clubs]
-    end
+- eliminates data silos across systems
+- defines clear ownership of data by domain
+- introduces controlled data flows and validation
+- centralizes data in BigQuery for consistency, analysis, and audit
+- improves usability through dashboards and natural-language access
+- clearly defines the role of the Philanthropy Analyst within this system
 
-    %% 2. Ingestion Path
-    A1 --> B1[Automated Ingestion<br/>Airbyte]
-    A2 --> B2[Structured Input<br/>Connected Sheets and Forms]
+The goal is not just to connect systems, but to create a trusted, scalable, and usable data ecosystem for the Advancement team.
 
-    %% 3. BigQuery / Google Cloud Control Tower (Governance at Core)
-    subgraph M1 [BigQuery / Google Cloud: Governance and Control Hub]
-        direction TB
-        spacer2[ ]:::spacer
-        C[Validation and Discrepancy Detection]
-        D[AI-Assisted Review - HITL<br/>AI suggests, Analyst approves]
-        E[Governed Output Tables]
+---
 
-        %% 4. AI / Agent Expansion
-        subgraph M4 [AI / Agent Layer: Future Expansion]
-            direction TB
-            spacer3[ ]:::spacer
-            H[Natural Language Access]
-            I[Insight Generation]
-            J[Workflow Assistance]
-        end
+## 1. Core Principles
 
-        %% 6. API Integration Layer (Governed Writeback)
-        K[API Orchestration Layer<br/>Governed Writeback Rules]
-    end
+### 1.1 Source of Truth by Data Domain
 
-    %% 5. Output and Action Layer
-    subgraph M5 [Output and Action Layer]
-        direction TB
-        spacer4[ ]:::spacer
-        V[Veracross Update]
-        DP[DonorPerfect Sync]
-        F[Dashboards<br/>Metabase]
-        G[Insight and Action]
-    end
+- **Veracross** is the authoritative source for identity, demographic, and contact data.
+- **DonorPerfect** is the authoritative source for gifts, fundraising activity, and advancement-specific data.
 
-    %% --- Connections ---
-    B1 & B2 --> C
-    C --> D
-    D --> E
+Each data element has a single authoritative owner.
 
-    %% The Integration Flow (Posting to APIs)
-    E --> K
-    K -->|POST: Institutional Data| V
-    K -->|Direct POST: LionLink, Stelter, etc.| DP
-    V -.->|Native Bio/Demo Sync| DP
+**Simple framing:** ownership means where the truth lives.
 
-    %% AI Layer feeds from Governed Data
-    E --> H
-    E --> I
-    D --> J
+### 1.2 Controlled Data Flow
 
-    %% Insight Flow
-    E --> F
-    F --> G
+Data does not move freely between systems. All updates follow a defined pathway so that data quality rules, validation, and auditability are preserved.
 
-    %% Feedback Loops
-    G -.->|Feedback: Refine Logic| C
-    G -.->|Feedback: Train Agents| M4
+### 1.3 Separation of Responsibilities
 
-    %% --- Styling ---
-    classDef spacer fill:none,stroke:none,color:none,height:25px;
-    class spacer1,spacer2,spacer3,spacer4 spacer;
+| Layer | Responsibility |
+|---|---|
+| Capture systems | Collect data |
+| Ingestion layer | Move data into BigQuery |
+| BigQuery | Standardize, validate, route, audit |
+| Source-of-truth systems | Maintain authoritative operational records |
+| Visualization layer | Present insights |
+| Agent layer | Improve accessibility, explanation, and guided use |
 
-    classDef rules stroke:#f39c12,stroke-width:4px,stroke-dasharray: 5 5;
-    class C,D,K rules;
+---
 
-    style M1 fill:#f4f7f9,stroke:#3498db,stroke-width:2px
-    style M2 fill:#fdfcf0,stroke:#f1c40f
-    style M4 fill:#f5eef8,stroke:#8e44ad,stroke-width:2px,stroke-dasharray: 3 3
-    style M5 fill:#ffffff,stroke:#27ae60,stroke-width:1px
+## 2. System Architecture
 
-    style C fill:#d6eaf8
-    style D fill:#fcf3cf
-    style E fill:#d6eaf8,font-weight:bold
-    style K fill:#e1f5fe,stroke:#f39c12,stroke-dasharray: 5 5
-    style G fill:#d4efdf,stroke:#27ae60,stroke-width:2px
+### 2.1 Capture Layer (Non-Authoritative Systems)
+
+- Lion Link, Boost My School, Greater Giving, and similar tools collect data but do not define truth.
+
+### 2.2 Airbyte as the Ingestion Layer
+
+Airbyte moves data from systems (APIs/exports) into BigQuery, standardizing ingestion and reducing custom code. CDK enables custom connectors when needed.
+
+**Boundary:** Airbyte handles movement, not governance.
+
+### 2.3 BigQuery as the Central Data Layer
+
+- **Ingestion/Staging:** raw + normalized tables with metadata  
+- **Validation:** auto-approve / needs review / reject  
+- **Routing:** determines target system for updates  
+- **Audit:** full change history
+
+### 2.4 Source-of-Truth Systems
+
+- **Veracross:** identity, contact, demographics  
+- **DonorPerfect:** gifts, fundraising activity
+
+### 2.5 Write-Back Layer
+
+Cloud Run (or similar) reads approved updates from BigQuery and writes to Veracross/DonorPerfect via APIs.
+
+---
+
+## 3. Data Governance Model
+
+### 3.1 Single Authoritative Write Path
+
+Each field is finalized in one system only.
+
+### 3.2 Human-in-the-Loop Validation
+
+Updates classified as:
+- auto-approve  
+- needs review  
+- reject  
+
+### 3.3 Audit and Traceability
+
+Every change is logged with full lineage.
+
+---
+
+## 4. Analytics and Visualization
+
+### 4.1 BigQuery Foundation
+
+Curated datasets and consistent definitions.
+
+### 4.2 Metabase Layer
+
+Dashboards and reporting on governed tables.
+
+---
+
+## 5. Agent Layer (Usability & Intelligence)
+
+Agents enable:
+- natural-language querying  
+- explanation and context  
+- guided analysis  
+- review assistance  
+
+Agents assist but do not control data ownership or write-back.
+
+---
+
+## 6. AI-First Enablement
+
+### 6.1 Principle
+
+AI is the primary interface for interacting with data, supported by governed systems and human oversight.
+
+### 6.2 Rationale
+
+AI systems are only as reliable as the data they operate on. Without:
+- clear ownership
+- consistent definitions
+- controlled data flow
+
+AI produces inconsistent or misleading results.
+
+This architecture ensures:
+- trusted, consistent data
+- centralized access via BigQuery
+- structured layers for safe AI interaction
+
+### 6.3 Implementation
+
+- BigQuery provides governed, unified datasets  
+- Agents provide natural-language access and explanation  
+- Metabase provides structured visualization  
+- Governance ensures AI outputs are consistent and trustworthy  
+
+### 6.4 Key Insight
+
+AI-first does not mean AI replaces systems—it means:
+
+> data is structured so AI can be reliably used as the primary interface.
+
+---
+
+## 7. Philanthropy Analyst Role
+
+### 7.1 Purpose
+
+Operate at the insight layer using governed data.
+
+### 7.2 Responsibilities
+
+- build dashboards (Metabase)  
+- analyze fundraising performance  
+- support strategy  
+- use AI/agents for exploration  
+
+### 7.3 Not Responsible For
+
+- architecture  
+- pipelines  
+- source-of-truth definitions  
+
+### 7.4 Role Summary
+
+The analyst generates insight within a governed system, not infrastructure.
+
+---
+
+## 8. Strategic Impact
+
+- consistent data  
+- reduced manual work  
+- scalable analytics  
+- AI-enabled usability  
+- faster onboarding  
+
+---
+
+## Summary Statement
+
+We are creating a governed data ecosystem where systems have defined roles, Airbyte supports ingestion, BigQuery governs data flow, and AI (via agents) becomes the primary interface for interacting with trusted data.
