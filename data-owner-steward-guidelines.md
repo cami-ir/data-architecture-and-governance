@@ -65,7 +65,7 @@ Each system has a defined role. Updates should always be made in the system wher
 To support consistent reporting, data should be updated on a regular cadence.
 
 **In practice:**
-- Complete weekly updates by the end of the work week when possible  
+- Complete updates to data according to a predefined timeline in colaboration with Philanthropy 
 - Ensure event participation, updates, and key changes are entered in a timely way  
 
 ---
