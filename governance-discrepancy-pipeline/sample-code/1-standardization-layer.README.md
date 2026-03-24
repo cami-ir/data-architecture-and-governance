@@ -63,3 +63,56 @@ WHERE cust_id IS NOT NULL;
 - Uniformity: If you have data from three different regions, Layer 1 makes sure DATE is always YYYY-MM-DD before you try to match them in Layer 2.
 - Performance: By casting to proper types (like INT64 or DATE), BigQuery processes the data significantly faster and cheaper than if it were all STRING.
 - Governance Start: This is where you first define what "valid" data looks like. If it can't be cast to a DATE here, it's already a candidate for a discrepancy.
+
+# Deduplication Pattern
+### This defines the Golden Record logic
+If someone asks why a particular update was ignored, you can point to the ORDER BY clause the defines the priorities
+
+SQL
+CREATE OR REPLACE TABLE `project.std_dataset.customers` AS
+SELECT
+  cust_id,
+  email,
+  signup_date,
+  ingested_at
+FROM `project.raw_dataset.crm_raw`
+WHERE cust_id IS NOT NULL
+-- THE MAGIC HAPPENS HERE:
+WINDOW_LOGIC: QUALIFY ROW_NUMBER() OVER (
+  PARTITION BY cust_id   -- What defines a duplicate?
+  ORDER BY ingested_at DESC, _file_name DESC -- Which one is the "Truth"?
+) = 1;
+
+```mermaid
+graph TD
+    subgraph Input [Raw Data with Duplicates]
+        R1[ID 101 - Version 1 - 10:00 AM]
+        R2[ID 101 - Version 2 - 10:05 AM]
+        R3[ID 102 - Version 1 - 09:00 AM]
+    end
+
+    subgraph Logic [The Partition & Rank Window]
+        P[<b>PARTITION BY</b> entity_id<br/><i>Groups IDs together</i>]
+        O[<b>ORDER BY</b> timestamp DESC<br/><i>Newest to top</i>]
+        RN[<b>ROW_NUMBER</b><br/><i>Assigns 1, 2, 3...</i>]
+    end
+
+    subgraph Filter [The QUALIFY Clause]
+        Q{Keep only<br/>row_number = 1}
+    end
+
+    subgraph Output [Standardized Table]
+        Winner1[ID 101 - Version 2 - 10:05 AM]
+        Winner2[ID 102 - Version 1 - 09:00 AM]
+    end
+
+    R1 & R2 & R3 --> P
+    P --> O
+    O --> RN
+    RN --> Q
+    Q --> Winner1
+    Q --> Winner2
+
+    style Q fill:#f96,stroke:#333,color:#fff
+    style Winner1 fill:#bbf,stroke:#333
+    style Winner2 fill:#bbf,stroke:#333
