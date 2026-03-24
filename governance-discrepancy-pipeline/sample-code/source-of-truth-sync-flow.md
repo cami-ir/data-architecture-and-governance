@@ -43,3 +43,49 @@ graph TD
     style VX fill:#d1e7dd,stroke:#0f5132,stroke-width:3px
     style DP fill:#f8f9fa,stroke:#333
     style Disc fill:#f8d7da,stroke:#842029
+```
+# Sample Code for Failure Mode 2/Rule B
+
+```SQL
+SELECT 
+  alumni_id,
+  'API_SYNC_ERROR' AS rule_id,
+  'Veracross vs Donor Perfect Mismatch' AS rule_name,
+  'Donor Perfect' AS system_to_fix,
+  vx_email AS expected_value,
+  dp_email AS actual_value,
+  'High' AS severity
+FROM `project.conformed.audit_master`
+WHERE vx_email != dp_email;
+```
+
+# Sample Code for joining descrepancy table back to standardized alum table 
+This view flattens the logic so a Metabase user can filter by system_to_fix or severity.
+```SQL
+CREATE OR REPLACE VIEW `your_project.governance.vw_metabase_action_queue` AS
+SELECT
+  -- 1. Human Readable Info
+  a.first_name,
+  a.last_name,
+  a.class_year,
+  
+  -- 2. The Discrepancy Details
+  d.rule_name,
+  d.severity,
+  d.system_to_fix,
+  
+  -- 3. The "Fix-It" Instructions
+  d.expected_value AS value_should_be,
+  d.actual_value AS current_value_in_system,
+  
+  -- 4. Metadata for Context
+  d.first_detected_at,
+  d.occurrence_count,
+  
+  -- 5. Deep Link (Pro-tip: Create a link directly to the record if possible)
+  CONCAT('https://veracross.com/your_school/alumni/', a.alumni_id) AS veracross_link
+
+FROM `your_project.governance.discrepancy_registry` d
+JOIN `your_project.std_dataset.alumni_master` a 
+  ON d.entity_id = a.alumni_id
+WHERE d.status = 'OPEN';
