@@ -59,7 +59,7 @@ FROM `project.conformed.audit_master`
 WHERE vx_email != dp_email;
 ```
 
-# Sample Code for joining descrepancy table back to standardized alum table to make updates easy!
+# Sample Code for creating discrepancy table
 This view flattens the logic so a Metabase user can filter by system_to_fix or severity. This view also incude support for the "commit workflow" where changes are batch applied by Cloud Run function overnight
 ```SQL
 CREATE OR REPLACE TABLE `your_project.governance.discrepancy_registry` (
@@ -93,6 +93,53 @@ CREATE OR REPLACE TABLE `your_project.governance.discrepancy_registry` (
 )
 CLUSTER BY status, rule_id; -- Optimized for Metabase and the Cloud Function
 ```
+
+### Discrepancy Registry: Table Schema
+
+| Column Name | Data Type | Key/Null | Description |
+| :--- | :--- | :--- | :--- |
+| **discrepancy_id** | `STRING` | `DEFAULT UUID` | Primary Key: Unique ID for this specific error instance. |
+| **entity_id** | `STRING` | `NOT NULL` | The **Alumni_ID** (links to Veracross/Lion Link). |
+| **rule_id** | `STRING` | `NOT NULL` | The audit rule triggered (e.g., `EMAIL_MISMATCH`). |
+| **field_name** | `STRING` | - | The Veracross API field to update (e.g., `email_1`). |
+| **actual_value** | `STRING` | - | The current value found in Veracross. |
+| **expected_value** | `STRING` | - | The proposed "new" value from Lion Link. |
+| **status** | `STRING` | `DEF: 'OPEN'` | **OPEN**, **COMMITTED**, **RESOLVED**, or **ERROR**. |
+| **severity** | `STRING` | - | Priority for Metabase (LOW, HIGH, CRITICAL). |
+| **first_detected_at** | `TIMESTAMP` | `DEFAULT NOW` | When the mismatch was first discovered. |
+| **last_seen_at** | `TIMESTAMP` | `DEFAULT NOW` | Last time the SQL engine confirmed it still exists. |
+| **occurrence_count** | `INT64` | `DEFAULT 1` | How many times the audit has flagged this record. |
+| **committed_by** | `STRING` | - | Email of the staff member who approved the fix. |
+| **committed_at** | `TIMESTAMP` | - | Timestamp of human approval. |
+| **last_sync_attempt** | `TIMESTAMP` | - | Last time the Cloud Function tried to PATCH. |
+| **retry_count** | `INT64` | `DEFAULT 0` | Tracks failed sync attempts. |
+| **last_error_msg** | `STRING` | - | Raw error feedback from the Veracross API. |
+
+---
+
+### BigQuery DDL (SQL)
+
+```sql
+CREATE OR REPLACE TABLE `your_project.governance.discrepancy_registry` (
+  discrepancy_id STRING DEFAULT GENERATE_UUID(),
+  entity_id STRING NOT NULL,
+  rule_id STRING NOT NULL,
+  field_name STRING,
+  actual_value STRING,
+  expected_value STRING,
+  status STRING DEFAULT 'OPEN',
+  severity STRING,
+  first_detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+  last_seen_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+  occurrence_count INT64 DEFAULT 1,
+  committed_by STRING,
+  committed_at TIMESTAMP,
+  last_sync_attempt TIMESTAMP,
+  retry_count INT64 DEFAULT 0,
+  last_error_msg STRING
+)
+CLUSTER BY status, rule_id;
+
 ## How it looks in Metabase
 ```mermaid
 graph TD
