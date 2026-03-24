@@ -3,6 +3,7 @@ This sample SQL ensures that if Rule 001 finds an error on "Customer A" today, a
 
 ## Layer 4: State Management Flow (Portrait)
 This diagram shows how the MERGE act as a gatekeeper to keep your resolution dashboard clean.
+
 ```mermaid
 graph TD
     subgraph NewDetection [Layer 3 Output]
@@ -33,6 +34,7 @@ graph TD
 
     style Table fill:#dfd,stroke:#333,stroke-width:2px
     style Logic fill:#f9f9f9,stroke:#666,stroke-dasharray: 5 5
+```
 
 ## Why this is "Governance" and not just "Reporting":
 - Deduplication: Your analysts don't wake up to 5,000 alerts for the same 10 broken rows. They see 10 rows with an occurrence_count of 5,000.
