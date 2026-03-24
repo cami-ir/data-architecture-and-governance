@@ -1,4 +1,4 @@
-# Phase 1: Address Reconciliation Workflow (LionLink → Validation → Systems)
+Address Reconciliation Workflow (LionLink → Validation → Systems)
 
 ```mermaid
 flowchart TD
