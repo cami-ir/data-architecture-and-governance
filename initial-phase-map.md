@@ -5,17 +5,25 @@ flowchart TD
     A[LionLink Export]
     B[DonorPerfect via Airbyte]
     
-    A --> C[BigQuery Validation Layer comparing Lion Link address data with Veracross and DonorPerfect data]
+    subgraph V[BigQuery Validation Layer]
+        C[BigQuery Validation Layer comparing Lion Link address data with Veracross and DonorPerfect data]
+        D[Validation and Discrepancy Rules]
+        F[Human Review of Discrepancy and Validation Findings]
+        E[Refine Validation Rules As Needed]
+    end
+
+    A --> C
     B --> C
 
-    C --> D[Validation/Discrepancy Rules]
-    D --> E[Reconciliation Update Table - Refine Validation Rules As Needed]
+    C --> D
+    D --> F
+    F --> E
+    E --> D
 
-    E --> F[HITL Review]
-    F --> G[Approved Updates File]
+    E --> G[Approved Updates Files]
 
-    G --> H[Manual Update Veracross]
-    G --> I[Manual Update DonorPerfect]
+    G --> H[Manual Import Veracross]
+    G --> I[Manual Import DonorPerfect]
 
     H --> J[Airbyte Sync to BigQuery]
     I --> J
