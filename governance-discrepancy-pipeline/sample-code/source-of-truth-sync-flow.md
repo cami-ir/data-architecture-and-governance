@@ -59,39 +59,39 @@ FROM `project.conformed.audit_master`
 WHERE vx_email != dp_email;
 ```
 
-# Sample Code for creating discrepancy table
+# Sample Code for creating discrepancy registry
 This view flattens the logic so a Metabase user can filter by system_to_fix or severity. This view also incude support for the "commit workflow" where changes are batch applied by Cloud Run function overnight
-```SQL
 CREATE OR REPLACE TABLE `your_project.governance.discrepancy_registry` (
   -- 1. Unique Identifiers
-  discrepancy_id STRING DEFAULT GENERATE_UUID(), -- Unique key for the error itself
-  entity_id STRING NOT NULL,                      -- The Alumni_ID
-  rule_id STRING NOT NULL,                        -- e.g., 'RULE_A' (LL vs VX) or 'RULE_B' (VX vs DP)
+  discrepancy_id STRING DEFAULT GENERATE_UUID(),
+  entity_id STRING NOT NULL,         -- Could be a Person ID OR a Household ID
+  entity_type STRING NOT NULL,       -- Set this to 'PERSON' or 'HOUSEHOLD'
+  rule_id STRING NOT NULL,           -- e.g., 'EMAIL_MISMATCH'
   
   -- 2. The Data Conflict
-  field_name STRING,                              -- e.g., 'email', 'phone', 'home_address'
-  actual_value STRING,                            -- What is currently in Veracross
-  expected_value STRING,                          -- What Lion Link says it should be
+  field_name STRING,                 -- e.g., 'email_1', 'mobile_phone', 'home_phone'
+  actual_value STRING,               -- What's in Veracross now
+  expected_value STRING,             -- What Lion Link says it should be
   
   -- 3. The Lifecycle (The "State Machine")
-  status STRING DEFAULT 'OPEN',                   -- OPEN, COMMITTED, RESOLVED, or ERROR
-  severity STRING,                                -- LOW, MEDIUM, HIGH, CRITICAL
+  status STRING DEFAULT 'OPEN',      -- OPEN, COMMITTED, RESOLVED, or ERROR
+  severity STRING,                   -- LOW, MEDIUM, HIGH, CRITICAL
   
   -- 4. Audit & Tracking
   first_detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
   last_seen_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
   occurrence_count INT64 DEFAULT 1,
   
-  -- 5. Human Approval (Layer 3)
-  committed_by STRING,                            -- Email of the staff member who clicked 'Commit'
+  -- 5. Human Approval
+  committed_by STRING,               -- Staff email from Metabase
   committed_at TIMESTAMP,
   
-  -- 6. API Feedback (Layer 4)
+  -- 6. API Feedback
   last_sync_attempt TIMESTAMP,
   retry_count INT64 DEFAULT 0,
-  last_error_message STRING                       -- Human-readable error from Veracross API
+  last_error_message STRING          -- Error from Veracross (if any)
 )
-CLUSTER BY status, rule_id; -- Optimized for Metabase and the Cloud Function
+CLUSTER BY status, entity_type;      -- Optimized for your Cloud Function logic
 ```
 
 ### Discrepancy Registry: Table Schema
@@ -99,10 +99,11 @@ CLUSTER BY status, rule_id; -- Optimized for Metabase and the Cloud Function
 | Column Name | Data Type | Key/Null | Description |
 | :--- | :--- | :--- | :--- |
 | **discrepancy_id** | `STRING` | `DEFAULT UUID` | Primary Key: Unique ID for this specific error instance. |
-| **entity_id** | `STRING` | `NOT NULL` | The **Alumni_ID** (links to Veracross/Lion Link). |
-| **rule_id** | `STRING` | `NOT NULL` | The audit rule triggered (e.g., `EMAIL_MISMATCH`). |
-| **field_name** | `STRING` | - | The Veracross API field to update (e.g., `email_1`). |
-| **actual_value** | `STRING` | - | The current value found in Veracross. |
+| **entity_id** | `STRING` | `NOT NULL` | The Veracross ID (either the Person ID or the Household ID). |
+| **entity_type** | `STRING` | `NOT NULL` | **PERSON** (for Email/Mobile/Biz) or **HOUSEHOLD** (for Home Phone/Address). |
+| **rule_id** | `STRING` | `NOT NULL` | The audit rule triggered (e.g., `EMAIL_MISMATCH` or `HOME_PHONE_MISMATCH`). |
+| **field_name** | `STRING` | - | The Veracross API field to update (e.g., `email_1`, `home_phone`). |
+| **actual_value** | `STRING` | - | The current "stale" value found in Veracross. |
 | **expected_value** | `STRING` | - | The proposed "new" value from Lion Link. |
 | **status** | `STRING` | `DEF: 'OPEN'` | **OPEN**, **COMMITTED**, **RESOLVED**, or **ERROR**. |
 | **severity** | `STRING` | - | Priority for Metabase (LOW, HIGH, CRITICAL). |
