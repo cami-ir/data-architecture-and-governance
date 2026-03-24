@@ -59,33 +59,62 @@ FROM `project.conformed.audit_master`
 WHERE vx_email != dp_email;
 ```
 
-# Sample Code for joining descrepancy table back to standardized alum table 
+# Sample Code for joining descrepancy table back to standardized alum table to make updates easy!
 This view flattens the logic so a Metabase user can filter by system_to_fix or severity.
 ```SQL
 CREATE OR REPLACE VIEW `your_project.governance.vw_metabase_action_queue` AS
 SELECT
-  -- 1. Human Readable Info
+  -- Who is it?
   a.first_name,
   a.last_name,
   a.class_year,
   
-  -- 2. The Discrepancy Details
+  -- What is the conflict?
   d.rule_name,
-  d.severity,
-  d.system_to_fix,
   
-  -- 3. The "Fix-It" Instructions
-  d.expected_value AS value_should_be,
-  d.actual_value AS current_value_in_system,
+  -- The "Side-by-Side" (The Context)
+  d.actual_value AS current_in_veracross,
+  d.expected_value AS new_from_lion_link,
   
-  -- 4. Metadata for Context
+  -- The "Fix It" Button
+  CONCAT('https://accounts.veracross.com/your_school/portals/records/', a.alumni_id) AS fix_in_veracross,
+  
+  -- Metadata
   d.first_detected_at,
-  d.occurrence_count,
-  
-  -- 5. Deep Link (Pro-tip: Create a link directly to the record if possible)
-  CONCAT('https://veracross.com/your_school/alumni/', a.alumni_id) AS veracross_link
-
+  d.severity
 FROM `your_project.governance.discrepancy_registry` d
 JOIN `your_project.std_dataset.alumni_master` a 
   ON d.entity_id = a.alumni_id
 WHERE d.status = 'OPEN';
+```
+## How it looks in Metabase
+```mermaid
+graph TD
+    subgraph UI [Metabase Row Layout]
+        Name[<b>Name:</b> Jane Doe '12]
+        Issue[<b>Issue:</b> Email Mismatch]
+        Old[<b>Veracross:</b> j.doe@old.com]
+        New[<b>Lion Link:</b> jane.doe@gmail.com]
+        Link[<button>Update Veracross ↗</button>]
+    end
+
+    Name --- Issue
+    Issue --- Old
+    Old --- New
+    New --- Link
+
+    style Name fill:#f8f9fa,stroke:#333
+    style Old fill:#fff3cd,stroke:#664d03
+    style New fill:#d1e7dd,stroke:#0f5132
+    style Link fill:#007bff,color:#fff
+```
+## We can also create an API Verification View
+You can create a second tab in Metabase specifically for the Veracross vs. Donor Perfect sync. This one is for your technical team:
+- Column A: Veracross Value (The Truth)
+- Column B: Donor Perfect Value (The Mirror)
+
+The Goal: These should match 100% of the time. If they don't, it's an API bug, not a human data entry error.
+
+### Why this is "Cool" for your Team:
+- Confidence: The staff member doesn't have to guess if they are making the right change. They see the evidence right there.
+- Speed: They can keep Metabase open on one half of their screen and Veracross on the other. Click link → Copy New Value → Paste in Veracross → Save. * Verification: Once they save in Veracross, they know that tomorrow morning, that row will be gone from their list.
