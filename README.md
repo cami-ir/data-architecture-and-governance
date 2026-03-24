@@ -1,4 +1,4 @@
-# Advancement Data Architecture & AI-First Strategy
+# Philanthropy Data Architecture & AI-First Strategy
 
 ## Executive Summary
 This repository houses the orchestration logic, data schemas, and governance rules for our institutional advancement data. Our goal is to move from manual data entry to a **Control Tower** model—where data is validated in Google Cloud, enriched by AI, and synchronized back to our core systems (Veracross and DonorPerfect) with 100% integrity.
