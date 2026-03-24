@@ -89,6 +89,24 @@ def nightly_batch_sync(event, context):
         "X-API-Revision": REVISION
     }
 
+def nightly_batch_sync(event, context): # --> this is related to the different destinations for household address and personal phone numbers
+    token = get_access_token()
+    client = bigquery.Client()
+
+    for row in rows:
+        # Determine the correct endpoint
+        if row.entity_type == 'PERSON':
+            url = f"https://api.veracross.com/{SCHOOL}/v3/contact_info/{row.entity_id}"
+        else:
+            url = f"https://api.veracross.com/{SCHOOL}/v3/households/{row.entity_id}"
+        
+        # All V3 PATCH requests wrap the fields in a "data" object
+        payload = {
+            "data": {
+                row.field_name: row.expected_value
+            }
+        }
+
     for row in rows:
         # Step 2: Format the PATCH per Veracross V3 docs
         url = f"https://api.veracross.com/{SCHOOL_ROUTE}/v3/contact_info/{row.entity_id}"
